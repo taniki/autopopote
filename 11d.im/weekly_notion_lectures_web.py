@@ -40,16 +40,12 @@ def readDatabase(databaseId, headers):
     readUrl = f"https://api.notion.com/v1/databases/{databaseId}/query"
 
     res = requests.request("POST", readUrl, headers=headers)
-    data = res.json()
-    print(res.status_code)
-    # print(res.text)
-
-    with open('./db.json', 'w', encoding='utf8') as f:
-        json.dump(data, f, ensure_ascii=False)
+    data = res.json()['results']
+    return data
 
 
 # %%
-readDatabase(databaseId, headers)
+db = readDatabase(databaseId, headers)
 
 # %%
 highlights = (
@@ -58,16 +54,16 @@ highlights = (
             [
                 item['properties']['Title']['title'][0]['plain_text'],
                 item['properties']['URL']['url'],
-                item['properties']['Last Highlighted']['date']['start']
+                item['properties']['Last Highlighted']['date']['start'],
+                item['properties']['Author']['rich_text'][0]['plain_text']
             ]
             for item
             in
-                json.load(open('db.json'))
-                ['results']
+                db
             if
                 item['properties']['Category']['select']['name'] == 'Articles'
         ),
-        columns=['title', 'url', 'date']
+        columns=['title', 'url', 'date', 'source']
     )
     .assign(
         date = lambda df: pd.to_datetime(df.date, utc=True)
@@ -82,10 +78,15 @@ friday_prev = friday + timedelta(weeks=-1)
 [friday, friday_prev]
 
 # %%
-last = highlights[ highlights.date >= '2023-01-20' ]
+friday_prev.strftime('%Y-%m-%d')
 
 # %%
-print("\n".join([ f"- [{l[0]}]({l[1]})" for l in last.values.tolist()  ]))
+last = highlights[ highlights.date >= friday_prev.strftime('%Y-%m-%d') ]
+
+# %%
+print("\n".join([ f"- [{l[0]}][article:{index}] ({l[3]})" for index,l in enumerate(last.values.tolist()) ]))
+print()
+print("\n".join([ f"[article:{index}]: {l[1]}" for index,l in enumerate(last.values.tolist()) ]))
 
 # %%
 podcasts = (
@@ -94,26 +95,29 @@ podcasts = (
             [
                 item['properties']['Title']['title'][0]['plain_text'],
                 item['properties']['URL']['url'],
-                item['properties']['Last Highlighted']['date']['start']
+                item['properties']['Last Highlighted']['date']['start'],
+                item['properties']['Author']['rich_text'][0]['plain_text']
             ]
             for item
             in
-                json.load(open('db.json'))
-                ['results']
+                db
             if
                 item['properties']['Category']['select']['name'] == 'Podcasts'
         ),
-        columns=['title', 'url', 'date']
+        columns=['title', 'url', 'date', 'author']
     )
     .assign(
         date = lambda df: pd.to_datetime(df.date, utc=True)
     )
+    .pipe(lambda df: df[ df.date >= friday_prev.strftime('%Y-%m-%d') ])
 )
 
 # %%
 podcasts
 
 # %%
-print("\n".join([ f"- [{l[0]}]({l[1]})" for l in podcasts[ podcasts.date >= '2023-01-20' ].values.tolist()  ]))
+print("\n".join([ f"- [{l[0]}][podcast:{index}] ({l[3]})" for index,l in enumerate(podcasts[ podcasts.date >= '2023-01-27' ].values.tolist()) ]))
+print()
+print("\n".join([ f"[podcast:{index}]: {l[1]}" for index,l in enumerate(podcasts[ podcasts.date >= '2023-01-27' ].values.tolist()) ]))
 
 # %%
