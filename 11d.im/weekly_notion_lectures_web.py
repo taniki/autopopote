@@ -116,8 +116,8 @@ podcasts = (
 podcasts
 
 # %%
-print("\n".join([ f"- [{l[0]}][podcast:{index}] ({l[3]})" for index,l in enumerate(podcasts[ podcasts.date >= '2023-01-27' ].values.tolist()) ]))
+print("\n".join([ f"- [{l[0]}][podcast:{index}] ({l[3]})" for index,l in enumerate(podcasts.values.tolist()) ]))
 print()
-print("\n".join([ f"[podcast:{index}]: {l[1]}" for index,l in enumerate(podcasts[ podcasts.date >= '2023-01-27' ].values.tolist()) ]))
+print("\n".join([ f"[podcast:{index}]: {l[1]}" for index,l in enumerate(podcasts.values.tolist()) ]))
 
 # %%
