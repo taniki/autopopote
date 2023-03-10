@@ -48,7 +48,7 @@ feeds = [
 ]
 
 # %%
-feeds.sort(key=lambda x: x['title'])
+feeds.sort(key=lambda x: x['title'].lower())
 
 # %%
 print(json.dumps(feeds, indent=2))
