@@ -39,7 +39,16 @@ headers = {
 def readDatabase(databaseId, headers):
     readUrl = f"https://api.notion.com/v1/databases/{databaseId}/query"
 
-    res = requests.request("POST", readUrl, headers=headers)
+    data = {
+        "sorts": [
+            {
+                "property": "Last Highlighted",
+                "direction": "descending"
+            }
+        ]
+    }
+    
+    res = requests.request("POST", readUrl, headers=headers, json=data)
     data = res.json()['results']
     return data
 
@@ -66,14 +75,21 @@ highlights = (
         columns=['title', 'url', 'date', 'source']
     )
     .assign(
-        date = lambda df: pd.to_datetime(df.date, utc=True)
+        date = lambda df: pd.to_datetime(df.date, utc=True),
+        domain = lambda df: df.url.str.split('/').apply(lambda x: x[2]).str.replace('www.', '')
     )
 )
 
+(
+    highlights
+)
+
+# %%
+
 # %%
 day = datetime.now()
-friday = day - timedelta(days=day.weekday()) + timedelta(days=4)
-friday_prev = friday + timedelta(weeks=-1)
+friday = (day - timedelta(days=day.weekday()) + timedelta(days=4)).replace(hour=23, minute=59, second=59)
+friday_prev = (friday + timedelta(weeks=-1) + timedelta(days=1)).replace(hour=0, minute=0, second=0)
 
 [friday, friday_prev]
 
@@ -81,10 +97,13 @@ friday_prev = friday + timedelta(weeks=-1)
 friday_prev.strftime('%Y-%m-%d')
 
 # %%
-last = highlights[ highlights.date >= friday_prev.strftime('%Y-%m-%d') ]
+last = highlights[
+    (highlights.date >= friday_prev.strftime('%Y-%m-%d'))
+    * (highlights.date <= friday.strftime('%Y-%m-%d'))
+]
 
 # %%
-print("\n".join([ f"- [{l[0]}][article:{index}] ({l[3]})" for index,l in enumerate(last.values.tolist()) ]))
+print("\n".join([ f"- [{l[0]}][article:{index}] • {l[4]} · {l[3]}" for index,l in enumerate(last.values.tolist()) ]))
 print()
 print("\n".join([ f"[article:{index}]: {l[1]}" for index,l in enumerate(last.values.tolist()) ]))
 
