@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.4
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -97,10 +97,13 @@ friday_prev = (friday + timedelta(weeks=-1) + timedelta(days=1)).replace(hour=0,
 friday_prev.strftime('%Y-%m-%d')
 
 # %%
-last = highlights[
-    (highlights.date >= friday_prev.strftime('%Y-%m-%d'))
-    * (highlights.date <= friday.strftime('%Y-%m-%d'))
-]
+last = (
+    highlights[
+        (highlights.date >= friday_prev.strftime('%Y-%m-%d'))
+        * (highlights.date <= friday.strftime('%Y-%m-%d'))
+    ]
+    .sort_values('date')
+)
 
 # %%
 print("\n".join([ f"- [{l[0]}][article:{index}] • {l[4]} · {l[3]}" for index,l in enumerate(last.values.tolist()) ]))
